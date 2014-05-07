@@ -1,4 +1,3 @@
-CLikeHaskellCompiler
-====================
 
-Intended to be nearly equivalent to the CLikeCompiler, except written in haskell, and potentially extended into OO/FP land, depending on motivation
+Implementation of a compiler for a C-Like language using Alex and Happy for lexing and parsing.
+The goal is to be functionally equivalent to the python program, just that it's written in Haskell instead
