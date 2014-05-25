@@ -2,6 +2,7 @@
 module CLikeLexer where
 
 import Prelude hiding (lex)
+import Debug.Trace
 }
 
 %wrapper "monad"
@@ -12,18 +13,22 @@ $alpha = [a-zA-Z]   -- alphabetics
 tokens :-
     $white+     ;
     "//".*      ;
-    $digit+     { lex (TokenInt . read) }
+    $digit+     { lex (TokenInt . read . showTrace) }
     "+"         { lex' TokenPlus }
     "-"         { lex' TokenMinus }
     "*"         { lex' TokenTimes }
     "/"         { lex' TokenDivide }
     "%"         { lex' TokenModulus }
+
     "<<"        { lex' TokenLShift }
     ">>"        { lex' TokenRShift }
     "=="        { lex' TokenEqualsEquals }
     "="         { lex' TokenEquals }
     "<"         { lex' TokenLThan }
     ">"         { lex' TokenGThan }
+    "<="        { lex' TokenLEThan }
+    ">="        { lex' TokenGEThan }
+
     "("         { lex' TokenLParen }
     ")"         { lex' TokenRParen }
     "{"         { lex' TokenLCurly }
@@ -35,7 +40,7 @@ tokens :-
     return      { lex' TokenReturn }
     int         { lex' TokenIntType }
     const       { lex' TokenConstType }
-    [a-zA-Z_][a-zA-Z0-9_]*  { lex (TokenId . read) }
+    [a-zA-Z_][a-zA-Z0-9_]*  { lex (TokenId) }
 
 {
 
@@ -54,6 +59,8 @@ data Token =
     | TokenEquals
     | TokenLThan
     | TokenGThan
+    | TokenLEThan
+    | TokenGEThan
     | TokenLParen
     | TokenRParen
     | TokenLCurly
@@ -87,7 +94,6 @@ alexMonadScan' = do
         alexSetInput inp'
         action (ignorePendingBytes inp) len
 
-
 -- Taken from dagit's happy-plus-alex example at https://github.com/dagit/happy-plus-alex
 alexEOF = return TokenEOF
 
@@ -100,4 +106,10 @@ lex f = \(_,_,_,s) i -> return (f (take i s))
 -- the input
 lex' :: a -> AlexAction a
 lex' = lex . const
+
+runAlexScan :: String -> Either String Token
+runAlexScan s = runAlex s $ alexMonadScan
+
+showTrace a = traceShow a a
+
 }

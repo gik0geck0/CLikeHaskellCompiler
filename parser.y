@@ -28,6 +28,8 @@ import CLikeTypes
     "="         { TokenEquals }
     "<"         { TokenLThan }
     ">"         { TokenGThan }
+    "<="        { TokenLEThan }
+    ">="        { TokenGEThan }
     "("         { TokenLParen }
     ")"         { TokenRParen }
     "{"         { TokenLCurly }
@@ -38,12 +40,13 @@ import CLikeTypes
     else        { TokenElse }
     return      { TokenReturn }
     "int"       { TokenIntType }
-    const       { TokenConstType }
+    "const"     { TokenConstType }
     id          { TokenId $$ }
 
 %%
 
--- Program : Statements    { Program $1 }
+-- Program : Expr TokenEOF { $1 }
+-- Statements    { Program $1 }
 --     p[0] = makeFamily('PROGRAM', p[1])
 --     p.set_lineno(0, p.lineno(1))
 -- 
@@ -79,12 +82,8 @@ import CLikeTypes
 --     'varassign : ID EQUALS expr'
 --     p[0] = makeFamily('ASSIGN', makeNode(p[1]), p[3])
 --     p.set_lineno(0, p.lineno(1))
--- 
--- def p_vardecl(p):
---     'vardecl : typeconstructor vars'
---     p[0] = makeFamily('DECLARESET', p[1], p[2])
---     p.set_lineno(0, p.lineno(1))
--- 
+
+
 -- def p_ifstmt(p):
 --     '''ifstmt : IF LPAREN boolexpr RPAREN LCURLY statements RCURLY
 --               | IF LPAREN boolexpr RPAREN LCURLY statements RCURLY ELSE statement SEMICOL
@@ -102,69 +101,43 @@ import CLikeTypes
 --     p.set_lineno(0, p.lineno(1))
 -- 
 
--- TypeConstructor : TypeModifier TypeConstructor     { modifyType $1 $2 }
---                 | Type      { Type [$1] }
--- 
--- Type : "int"      { $1 }
--- 
--- TypeModifier : const    { $1 }
+VarDecl : TypeConstructor Vars  { mkFamily DeclarationStatement [$1,$2] }
 
--- def p_vars(p):
---     '''vars : ID
---             | ID COMMA vars
---             | ID EQUALS expr
---             | ID EQUALS expr COMMA vars'''
---     if len(p) == 2:
---         # Just an ID
---         p[0] = makeFamily('DECLARE', makeNode(p[1]))
---     elif p[2] == '=':
---         # we are definitely assigning the ID
---         if len(p) > 4:
---             # Creates a new family alongside other families:
---             #   The new family is a DECLARE node strung with [ID -> VALUE]
---             p[0] = p[5].makeSiblings(makeFamily('DECLARE', makeNode(p[1]), p[3]))
---         else:
---             p[0] = makeFamily('DECLARE', makeNode(p[1]), p[3])
---     else:
---         p[0] = makeFamily('DECLARE', makeNode(p[1])).makeSiblings(p[3])
---     p.set_lineno(0, p.lineno(1))
--- 
--- def p_boolexpr(p):
---     '''boolexpr : expr LTHAN expr
---                 | expr GTHAN expr
---                 | expr EQUALSEQUALS expr
---                 | expr LTHAN EQUALS expr
---                 | expr GTHAN EQUALS expr
---                 | expr'''
---     if len(p) == 2:
---         p[0] = p[1]
---     elif len(p) == 4:
---         p[0] = makeFamily(p[2], p[1], p[3])
---     else:
---         p[0] = makeFamily(p[2]+p[3], p[1], p[4])
---     p.set_lineno(0, p.lineno(1))
--- 
--- def p_expr(p):
---     '''expr : term
---             | term PLUS term
---             | term MINUS term'''
---     if len(p) == 2:
---         p[0] = p[1]
---     else:
---         # Creates an oprator node that's strung with the terms to opreate on as its children
---         p[0] = makeFamily(p[2], p[1], p[3])
---     p.set_lineno(0, p.lineno(1))
--- 
+TypeConstructor : TypeModifier TypeConstructor     { mkFamily TypeConstructor [$1,$2] }
+                | Type      { $1 }
+
+Type : "int"    { mkNode Type $ Just $ StringData "int" }
+
+TypeModifier : "const"      { mkNode TypeModifier $ Just $ StringData "const" }
+             | TypeModifier TypeModifier { mkFamily TypeModifierMulti [$1,$2] }
+
+Vars : Identifier           { mkFamily DeclareVariable [$1] }
+     | Identifier "," Vars          { mkFamily DeclareVariableMulti [$1, $3] }
+     | Identifier "=" Expr          { mkFamily InstantiateVariable [$1,$3] }
+     | Identifier "=" Expr "," Vars { mkFamily InstantiateVariableMulti [$1,$3,$5] }
+
+BoolExpr : Expr "<" Expr    { mkFamily BooleanOperationLThan [$1, $3] }
+         | Expr ">" Expr    { mkFamily BooleanOperationGThan [$1, $3] }
+         | Expr "==" Expr   { mkFamily BooleanOperationDoubleEquals [$1, $3] }
+         | Expr "<=" Expr   { mkFamily BooleanOperationLEThan [$1, $3] }
+         | Expr ">=" Expr   { mkFamily BooleanOperationGEThan [$1, $3] }
+
+Expr : Term             { $1 }
+     | BoolExpr         { $1 }
+     | Term "+" Term    { mkFamily OperationPlus [$1, $3] }
+     | Term "-" Term    { mkFamily OperationMinus [$1, $3] }
 
 Term : Part             { $1 }
-     | Part "*" Part    { mkFamily TermMult [$1, $3] }
-     | Part "/" Part    { mkFamily TermDiv  [$1, $3] }
-     | Part "<<" Part   { mkFamily TermLSh  [$1, $3] }
-     | Part ">>" Part   { mkFamily TermRSh  [$1, $3] }
+     | Part "*" Part    { mkFamily OperationMult [$1, $3] }
+     | Part "/" Part    { mkFamily OperationDiv  [$1, $3] }
+     | Part "<<" Part   { mkFamily OperationLSh  [$1, $3] }
+     | Part ">>" Part   { mkFamily OperationRSh  [$1, $3] }
 
-Part : id       { PartID  $1 }
-     | int      { PartNum $1 }
---     | LPAREN expr RPAREN'''
+Part : id           { mkNode Identifier $ Just $ StringData $1 }
+     | int          { mkNode Number $ Just $ IntegerData $1 }
+     | "(" Expr ")" { $2 }
+
+Identifier : id { mkNode Identifier $ Just $ StringData $1 }
 
 -- def find_column(input,token):
 --     last_cr = input.rfind('\n',0,token.lexpos)
@@ -225,10 +198,10 @@ happyError t = do
   (l,c) <- getPosn
   fail (show l ++ ":" ++ show c ++ ": Parse error on Token: " ++ show t ++ "\n")
 
-parseExp :: String -> Either String Term
+parseExp :: String -> Either String Node
 parseExp s = runAlex s parse
 
-readExp :: FilePath -> IO (Either String Term)
+readExp :: FilePath -> IO (Either String Node)
 readExp fp = do
   cs <- readFile fp
   return (parseExp cs)
