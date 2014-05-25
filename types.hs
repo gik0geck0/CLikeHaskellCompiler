@@ -7,6 +7,9 @@ data Node = Node {
     , parent   :: Maybe Node
 } deriving Show
 
+getNodeChildren :: Node -> [Node]
+getNodeChildren node@(Node k d c p) = c
+
 data NodeDataType =
       StringData String
     | IntegerData Int
@@ -17,6 +20,9 @@ data NodeKind =
       Variable      -- Data is a String. used on the Left  of an =
     | Identifier    -- Data is a String. used on the Right of an =
     | Number
+
+    | CompilationUnit
+    | Statements
 
     | DeclarationStatement
 

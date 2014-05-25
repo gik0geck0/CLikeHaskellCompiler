@@ -45,11 +45,10 @@ import CLikeTypes
 
 %%
 
--- Program : Expr TokenEOF { $1 }
--- Statements    { Program $1 }
---     p[0] = makeFamily('PROGRAM', p[1])
---     p.set_lineno(0, p.lineno(1))
--- 
+Program : Statements    { mkFamily CompilationUnit [$1] }
+Statements : Statement  { mkFamily Statements [$1] }
+           | Statement Statements   { adoptChildren (mkNode Statements Nothing) (getNodeChildren $2) }
+
 -- # Returns a single statement node, which is the left-most sibling in its set
 -- def p_statementso(p):
 --     '''statements : statement
@@ -63,16 +62,12 @@ import CLikeTypes
 --         # of p[1]
 --         p[0] = p[1].makeSiblings(p[2])
 --     p.set_lineno(0, p.lineno(1))
--- 
--- def p_statement(p):
---     '''statement : returnstmt SEMICOL
---                  | ifstmt
---                  | varassign SEMICOL
---                  | vardecl SEMICOL'''
---     # Alternation of semicolon-statements, so no node-association logic
---     p[0] = p[1]
---     p.set_lineno(0, p.lineno(1))
--- 
+
+Statement : VarDecl ";"     { $1 }
+--          | ReturnStmt ";"  { $1 }
+--          | IfStmt          { $1 }
+--          | VarAssign ";"   { $1 }
+
 -- def p_returnstmt(p):
 --     'returnstmt : RETURN expr'
 --     p[0] = makeFamily('RETURN', p[2])
@@ -91,7 +86,7 @@ import CLikeTypes
 --     # print("Entering if with: ", p[1], p[2], p[3], p[4], p[5], p[6], p[7])
 --     if len(p) > 8:
 --         # Has an else
---         # The ternary-like part differentiates where the stmt/stmts come from
+--         # The ternary-like part differentiates where the stmt/stmts come from . read
 --         # p[0] = ('IF', p[3], 'THEN', p[6], 'ELSE', p[10] if len(p) > 11 else p[9])
 --         p[0] = makeFamily('IF', p[3], p[6], p[10] if len(p) > 11 else p[9])
 --     else:
@@ -124,14 +119,14 @@ BoolExpr : Expr "<" Expr    { mkFamily BooleanOperationLThan [$1, $3] }
 
 Expr : Term             { $1 }
      | BoolExpr         { $1 }
-     | Term "+" Term    { mkFamily OperationPlus [$1, $3] }
-     | Term "-" Term    { mkFamily OperationMinus [$1, $3] }
+     | Expr "+" Expr    { mkFamily OperationPlus [$1, $3] }
+     | Expr "-" Expr    { mkFamily OperationMinus [$1, $3] }
 
 Term : Part             { $1 }
-     | Part "*" Part    { mkFamily OperationMult [$1, $3] }
-     | Part "/" Part    { mkFamily OperationDiv  [$1, $3] }
-     | Part "<<" Part   { mkFamily OperationLSh  [$1, $3] }
-     | Part ">>" Part   { mkFamily OperationRSh  [$1, $3] }
+     | Expr "*" Expr    { mkFamily OperationMult [$1, $3] }
+     | Expr "/" Expr    { mkFamily OperationDiv  [$1, $3] }
+     | Expr "<<" Expr   { mkFamily OperationLSh  [$1, $3] }
+     | Expr ">>" Expr   { mkFamily OperationRSh  [$1, $3] }
 
 Part : id           { mkNode Identifier $ Just $ StringData $1 }
      | int          { mkNode Number $ Just $ IntegerData $1 }
