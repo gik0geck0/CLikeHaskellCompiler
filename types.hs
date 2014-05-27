@@ -25,6 +25,8 @@ data NodeKind =
     | Statements
 
     | DeclarationStatement
+    | ReturnStatement
+    | VariableAssignStatement
 
     | DeclareVariable
     | DeclareVariableMulti

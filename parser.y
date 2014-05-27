@@ -49,35 +49,14 @@ Program : Statements    { mkFamily CompilationUnit [$1] }
 Statements : Statement  { mkFamily Statements [$1] }
            | Statement Statements   { adoptChildren (mkNode Statements Nothing) (getNodeChildren $2) }
 
--- # Returns a single statement node, which is the left-most sibling in its set
--- def p_statementso(p):
---     '''statements : statement
---                 | statement statements'''
---     if len(p) == 2:
---         # Luckily, p[1] is already a statement node
---         p[0] = p[1]
---     else:
---         # p[2] will be the head of its sibling list.
---         # So all we need to do is add it and its siblings to the right
---         # of p[1]
---         p[0] = p[1].makeSiblings(p[2])
---     p.set_lineno(0, p.lineno(1))
-
 Statement : VarDecl ";"     { $1 }
---          | ReturnStmt ";"  { $1 }
+          | ReturnStmt ";"  { $1 }
 --          | IfStmt          { $1 }
---          | VarAssign ";"   { $1 }
+          | VarAssign ";"   { $1 }
 
--- def p_returnstmt(p):
---     'returnstmt : RETURN expr'
---     p[0] = makeFamily('RETURN', p[2])
---     p.set_lineno(0, p.lineno(2))
--- 
--- def p_varassign(p):
---     'varassign : ID EQUALS expr'
---     p[0] = makeFamily('ASSIGN', makeNode(p[1]), p[3])
---     p.set_lineno(0, p.lineno(1))
+ReturnStmt : return Expr  { mkFamily ReturnStatement [$2] }
 
+VarAssign : Identifier "=" Expr     { mkFamily VariableAssignStatement [$1,$3] }
 
 -- def p_ifstmt(p):
 --     '''ifstmt : IF LPAREN boolexpr RPAREN LCURLY statements RCURLY
@@ -133,33 +112,6 @@ Part : id           { mkNode Identifier $ Just $ StringData $1 }
      | "(" Expr ")" { $2 }
 
 Identifier : id { mkNode Identifier $ Just $ StringData $1 }
-
--- def find_column(input,token):
---     last_cr = input.rfind('\n',0,token.lexpos)
---     if last_cr < 0:
---         last_cr = -1
---     column = (token.lexpos - last_cr)
---     return column
--- 
--- def p_error(p):
---     if p is not None:
---         print("Syntax error at '%s', line %d, column %d" % (p.value, p.lineno, find_column(lexer.datainput,p)))
---     else:
---         print("Syntax error at Null. WTF")
--- 
--- yacc.yacc()
--- parseTree = yacc.parse(lexer.datainput)
--- 
--- # print("Parse Tree:")
--- # parseTree.prettyPrintStructure()
--- 
--- # print("Visitation tree:")
--- visitor.PrintVisitor().visit(parseTree)
--- 
--- # import pprint
--- # pp = pprint.PrettyPrinter(indent=4)
--- #pp.pprint(parseTree)
--- 
 
 {
 
