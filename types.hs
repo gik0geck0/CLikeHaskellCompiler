@@ -28,6 +28,10 @@ data NodeKind =
     | ReturnStatement
     | VariableAssignStatement
 
+    | IfStatement
+    | IfElseStatement
+    | WhileStatement
+
     | DeclareVariable
     | DeclareVariableMulti
     | InstantiateVariable

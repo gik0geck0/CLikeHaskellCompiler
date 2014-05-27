@@ -37,6 +37,7 @@ tokens :-
     ";"         { lex' TokenSemicol }
     if          { lex' TokenIf }
     else        { lex' TokenElse }
+    while       { lex' TokenWhile }
     return      { lex' TokenReturn }
     int         { lex' TokenIntType }
     const       { lex' TokenConstType }
@@ -69,6 +70,7 @@ data Token =
     | TokenSemicol
     | TokenIf
     | TokenElse
+    | TokenWhile
     | TokenReturn
     | TokenIntType
     | TokenConstType

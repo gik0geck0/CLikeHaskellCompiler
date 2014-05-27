@@ -38,6 +38,7 @@ import CLikeTypes
     ";"         { TokenSemicol }
     if          { TokenIf }
     else        { TokenElse }
+    while       { TokenWhile }
     return      { TokenReturn }
     "int"       { TokenIntType }
     "const"     { TokenConstType }
@@ -51,29 +52,19 @@ Statements : Statement  { mkFamily Statements [$1] }
 
 Statement : VarDecl ";"     { $1 }
           | ReturnStmt ";"  { $1 }
---          | IfStmt          { $1 }
+          | IfStmt          { $1 }
+          | WhileStmt          { $1 }
           | VarAssign ";"   { $1 }
 
 ReturnStmt : return Expr  { mkFamily ReturnStatement [$2] }
 
 VarAssign : Identifier "=" Expr     { mkFamily VariableAssignStatement [$1,$3] }
 
--- def p_ifstmt(p):
---     '''ifstmt : IF LPAREN boolexpr RPAREN LCURLY statements RCURLY
---               | IF LPAREN boolexpr RPAREN LCURLY statements RCURLY ELSE statement SEMICOL
---               | IF LPAREN boolexpr RPAREN LCURLY statements RCURLY ELSE LCURLY statements RCURLY'''
---     # print("Entering if with: ", p[1], p[2], p[3], p[4], p[5], p[6], p[7])
---     if len(p) > 8:
---         # Has an else
---         # The ternary-like part differentiates where the stmt/stmts come from . read
---         # p[0] = ('IF', p[3], 'THEN', p[6], 'ELSE', p[10] if len(p) > 11 else p[9])
---         p[0] = makeFamily('IF', p[3], p[6], p[10] if len(p) > 11 else p[9])
---     else:
---         # p[0] = ('IF', p[3], 'THEN', p[6])
---         p[0] = makeFamily('IF', p[3], p[6], makeNode())
---     # print("IFSTMT", p[0])
---     p.set_lineno(0, p.lineno(1))
--- 
+IfStmt : if "(" Expr ")" "{" Statements "}"     { mkFamily IfStatement [$3,$6] }
+       | if "(" Expr ")" "{" Statements "}" else Statement          { mkFamily IfElseStatement [$3,$6,$9]  }
+       | if "(" Expr ")" "{" Statements "}" else "{" Statements "}"  { mkFamily IfElseStatement [$3,$6,$10] }
+
+WhileStmt : while "(" Expr ")" "{" Statements "}"     { mkFamily WhileStatement [$3,$6] }
 
 VarDecl : TypeConstructor Vars  { mkFamily DeclarationStatement [$1,$2] }
 
