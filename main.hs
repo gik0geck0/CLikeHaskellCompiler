@@ -2,6 +2,7 @@ module Main(main) where
 
 import CLikeParser
 import CLikeLexer
+import CLikeVisitor
 
 -- Lexing main
 -- TODO: I want this to print out all the tokens that are found, but it doesn't quite work

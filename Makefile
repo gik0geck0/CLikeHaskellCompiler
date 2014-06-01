@@ -1,5 +1,5 @@
 all: lexer.hs parser.hs
-	ghc main.hs parser.hs lexer.hs types.hs -o clikeparser
+	ghc main.hs parser.hs lexer.hs types.hs visitor.hs -o clikeparser
 
 lexer.hs: lexer.x
 	alex lexer.x
