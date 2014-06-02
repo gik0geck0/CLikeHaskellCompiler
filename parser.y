@@ -46,7 +46,9 @@ import CLikeTypes
 
 %%
 
-Program : Statements    { mkFamily CompilationUnit [$1] }
+Program : CompilationUnit   { mkFamily Program [$1] }
+CompilationUnit : Statements    { mkFamily CompilationUnit [$1] }
+
 Statements : Statement  { mkFamily Statements [$1] }
            | Statement Statements   { adoptChildren (mkNode Statements Nothing) (getNodeChildren $2) }
 

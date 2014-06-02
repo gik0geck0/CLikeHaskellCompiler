@@ -21,6 +21,7 @@ data NodeKind =
     | Identifier    -- Data is a String. used on the Right of an =
     | Number
 
+    | Program
     | CompilationUnit
     | Statements
 

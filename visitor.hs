@@ -24,7 +24,9 @@ import Data.String.Utils
 listAssignAccum :: (a->a) -> [((Node, a), [(Node, a)])] -> Node -> [((Node, a), [(Node, a)])]
 listAssignAccum incA nodeList parent =
     let assignedChildren
-            = foldl
+            = if (length $ children parent) == 0 then []
+              else
+                foldl
                 (assignChildAs incA)
                 -- Sneaky/hacky trick.. Immediately grab the first child and its ID as the starting point, binding the next available ID into the starting value
                 -- TODO: Still need to allow for no-children nodes
@@ -76,7 +78,15 @@ doAccum a b = do
 nodePrinter :: Show a => (Node, a) -> Maybe [(Node, a)] -> IO()
 -- Must be the root node
 nodePrinter p@(pnode, pid) children = do
-    putStrLn $ (show pid) ++ " " ++ (show $ nodeKind pnode) ++ if isNothing $ nodeData pnode then "" else " " ++ (show $ fromJust $ nodeData pnode )
+    putStrLn $
+        (show pid) ++ " "
+        ++ (show $ nodeKind pnode)
+        ++ if isNothing $ nodeData pnode 
+            then ""
+            else " " ++
+                case fromJust $ nodeData pnode of
+                    StringData s    ->  s
+                    IntegerData i   ->  show i
     if isJust children then
         putStrLn $ (show pid) ++ " " ++ (join " " (map (show . snd) (fromJust children)))
     else return ()

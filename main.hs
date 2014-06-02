@@ -19,4 +19,4 @@ main = do
     cs <- getContents
     case parseExp cs of
         Left  e -> putStrLn ("error: " ++ e)
-        Right e -> print e
+        Right e -> runPrinter e

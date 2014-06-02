@@ -13,7 +13,7 @@ $alpha = [a-zA-Z]   -- alphabetics
 tokens :-
     $white+     ;
     "//".*      ;
-    $digit+     { lex (TokenInt . read . showTrace) }
+    $digit+     { lex (TokenInt . read) }
     "+"         { lex' TokenPlus }
     "-"         { lex' TokenMinus }
     "*"         { lex' TokenTimes }
