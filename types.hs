@@ -4,11 +4,11 @@ data Node = Node {
       nodeKind :: NodeKind
     , nodeData :: Maybe NodeDataType
     , children :: [Node]
-    , parent   :: Maybe Node
+    -- , parent   :: Maybe Node
 } deriving Show
 
 getNodeChildren :: Node -> [Node]
-getNodeChildren node@(Node k d c p) = c
+getNodeChildren node@(Node k d c) = c
 
 data NodeDataType =
       StringData String
@@ -59,19 +59,19 @@ data NodeKind =
 
 -- Creates a new node of a certain kind, and instantiates with a list of children
 mkFamily :: NodeKind -> [Node] -> Node
-mkFamily nkind children = Node nkind Nothing children Nothing
+mkFamily nkind children = Node nkind Nothing children
 
 -- Create a node with a kind, some data, no children and no parent
 mkNode :: NodeKind -> Maybe NodeDataType -> Node
-mkNode nkind ndata = Node nkind ndata [] Nothing
+mkNode nkind ndata = Node nkind ndata []
 
 -- add more children to a node
 adoptChildren :: Node -> [Node] -> Node
-adoptChildren parent@(Node pk pd pc pp) children = _updateParent $ Node pk pd (pc ++ children) pp
+adoptChildren parent@(Node pk pd pc) children = Node pk pd (pc ++ children)
 
 -- Returns the same node passed in except with a different parent
-_changeParent :: Maybe Node -> Node -> Node
-_changeParent parent child@(Node k d c _) = Node k d c parent
+-- _changeParent :: Maybe Node -> Node -> Node
+-- _changeParent parent child@(Node k d c _) = Node k d c parent
 
 -- Makes the children of this node have their parent set to itself
 --
@@ -84,8 +84,9 @@ _changeParent parent child@(Node k d c _) = Node k d c parent
 -- During construction only (bottom-up construction), this is not a problem
 --
 -- TODO: Currently, the parent is None. Always
-_updateParent :: Node -> Node
-_updateParent parent@(Node pk pd children pp) = Node pk pd (map (_changeParent Nothing) children) pp
+-- This is useless, since there is no parent info anymore
+-- _updateParent :: Node -> Node
+-- _updateParent parent@(Node pk pd children pp) = Node pk pd (map (_changeParent Nothing) children) pp
 
 
 -- This used to be used to identify the type using a single node. Now, its spread out in the AST
